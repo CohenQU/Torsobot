@@ -42,9 +42,9 @@ def init_IMU_port(): # find IMU port address and initialize serial connection if
                     print('IMU Port Found at ' + address)
                     return port
             except:
-            
+
                 pass
-    print('IMU Port Not Found') 
+    print('IMU Port Not Found')
     return None
 
 def IMU_execute(IMU_ser):
@@ -53,26 +53,20 @@ def IMU_execute(IMU_ser):
     Flag = True
     while(Flag == True):
         rate.sleep()
-        IMU_ser.write(bytearray(':10\n','UTF-8')) 
+        IMU_ser.write(bytearray(':10\n','UTF-8'))
         IMU_read = str(IMU_ser.readline())
         IMU_ser.flushInput() #flush buffer
         IMU_read = IMU_read.rstrip()
         Angle_data = IMU_read.split(",")
-        
-        angle_y = float(Angle_data[-2])
-        angle_z = float(Angle_data[-1])
-
-        angle = -math.atan(angle_y/angle_z)
-        dat_deg = conv_rad_to_deg_set(angle,4)
         print('Angle: '+ str(dat_deg))
         IMU.publish(dat_deg)
         #print(dat_deg)
 
         if (dat_deg > 80 or dat_deg < -80):
             Flag = False
-   
-if __name__ == "__main__": 
-    try: 
+
+if __name__ == "__main__":
+    try:
         IMU_func = init_IMU_port()
         #First_read = IMU_set(IMU_func)
         IMU_execute(IMU_func)
