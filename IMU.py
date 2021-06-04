@@ -69,11 +69,16 @@ def IMU_execute(IMU_ser):
     Flag = True
     while(Flag == True):
         rate.sleep()
+<<<<<<< HEAD
         IMU_ser.write(bytearray(':6\n','UTF-8'))
+=======
+        IMU_ser.write(bytearray(':10\n','UTF-8'))
+>>>>>>> exp
         IMU_read = str(IMU_ser.readline())
         IMU_ser.flushInput() #flush buffer
         IMU_read = IMU_read.rstrip()
         Angle_data = IMU_read.split(",")
+<<<<<<< HEAD
 
         x = float(Angle_data[0])
         y = float(Angle_data[1])
@@ -83,12 +88,19 @@ def IMU_execute(IMU_ser):
         angle = rotx
         dat_deg = conv_rad_to_deg_set(angle,4)
         dat_deg = - (dat_deg+90.0)
+=======
+>>>>>>> exp
         print('Angle: '+ str(dat_deg))
         IMU.publish(dat_deg)
         #print(dat_deg)
 
+<<<<<<< HEAD
         #if (dat_deg > 80 or dat_deg < -80):
           #  Flag = False
+=======
+        if (dat_deg > 80 or dat_deg < -80):
+            Flag = False
+>>>>>>> exp
 
 if __name__ == "__main__":
     try:

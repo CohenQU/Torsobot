@@ -3,10 +3,10 @@
 import rospy
 import os
 import datetime
+import keyboard
 import message_filters
 from std_msgs.msg import Int32, Float32
 from dual_g2_hpmd_rpi import motors
-import RPi.GPIO as GPIO
 import operator
 
 rospy.init_node('message_sync', anonymous=False)
@@ -17,11 +17,11 @@ Encoder_message = message_filters.Subscriber('/Encoder_data', Float32)
 global motor_output
 global speed_desired
 global angle_desired
-global k_p_angle 
-global k_i_angle 
-global k_d_angle 
-global k_p_speed 
-global k_i_speed 
+global k_p_angle
+global k_i_angle
+global k_d_angle
+global k_p_speed
+global k_i_speed
 global time1
 global time2
 global reset
@@ -57,7 +57,7 @@ k_i_speed = 18.0#1.5 # integral gain for speed control(30) 1:35
 
 Second PID
 """
-k_p_angle2 = 10.#10 # propotional gain for angle control // 
+k_p_angle2 = 10.#10 # propotional gain for angle control //
 k_i_angle2 = 13.#1.5#k_p_angle/6. # integral gain for angle control
 k_d_angle2 = 0.7# derivatibe gain for angle control
 
@@ -74,16 +74,6 @@ motor_output = 0
 flag = True
 button_not_pressed = True
 rate = rospy.Rate(Frequency)
-
-"""
-The following code initializes the button press feature
-"""
-pin_switch_write = 20 #pin 38
-pin_switch_read = 21 #pin 40
-GPIO.setmode(GPIO.BCM)
-GPIO.setup(pin_switch_write, GPIO.OUT)
-GPIO.setup(pin_switch_read, GPIO.IN, GPIO.PUD_DOWN) 
-GPIO.output(pin_switch_write,1)
 
 def drive_motor(speed): # send speed command to motor
     global run
@@ -106,11 +96,11 @@ def PID_control(IMU_message,Encoder_message):
     global flag
     global speed_desired
     global angle_desired
-    global k_p_angle 
-    global k_i_angle 
-    global k_d_angle 
-    global k_p_speed 
-    global k_i_speed 
+    global k_p_angle
+    global k_i_angle
+    global k_d_angle
+    global k_p_speed
+    global k_i_speed
     global speed_desired2
     global angle_desired2
     global k_p_angle2
@@ -129,22 +119,22 @@ def PID_control(IMU_message,Encoder_message):
     global speed_error
     global First_PID_run
     global motor_output
-    
-    
+
+
     time2 = rospy.get_time()
-    
-    if GPIO.input(pin_switch_read) == 1:
-        run = False    
+
+    if keyboard.is_pressed('space') == True:
+        run = False
     if run == False:
         if Fall == False:
             file.write('The robot stopped due to BUTTON PRESSED')
             print('Robot stopped')
-            file.close()      
+            file.close()
         elif Fall == True:
             file.write('The robot stopped due to FALLING')
             print('Robot stopped')
             file.close()
-    
+
     if Encoder_message.data/60.0 >= 0.1 and flag == True:
         print('PID switched')
         k_p_angle = k_p_angle2
@@ -160,28 +150,28 @@ def PID_control(IMU_message,Encoder_message):
         angle_desired = angle_desired2
         flag = False
         First_PID_run = True
-       
-    current_wheel_speed = -Encoder_message.data/60.0 #Wheel speed will be in rps 
+
+    current_wheel_speed = -Encoder_message.data/60.0 #Wheel speed will be in rps
     angle_prev = current_imu_angle
     current_imu_angle = IMU_message.data
-    
+
     #### time update
     time_old = time_current # set previous time reading
     time_current = rospy.get_time() # set current time reading
     dt = time_current - time_old # time step
-    
+
     """
     Outer PID loop
     """
 
     #Loop time
-    if(First_PID_run): 
+    if(First_PID_run):
     # P
         speed_error = speed_desired - current_wheel_speed
     # I
         speed_error_cum += speed_error * dt
     # Effort
-        angle_desired = 2.0 * (k_p_speed * speed_error + k_i_speed * speed_error_cum) 
+        angle_desired = 2.0 * (k_p_speed * speed_error + k_i_speed * speed_error_cum)
     """
     Inner PID loop
     """
@@ -192,14 +182,14 @@ def PID_control(IMU_message,Encoder_message):
         angle_error_cum += angle_error*dt
         # D
         angle_diff = (angle_error - angle_error_prev)/dt
-        
+
         angle_error_prev = angle_error
-            
+
         # Output
-        motor_output = -(k_p_angle*angle_error + k_i_angle*angle_error_cum + k_d_angle*angle_diff) 
+        motor_output = -(k_p_angle*angle_error + k_i_angle*angle_error_cum + k_d_angle*angle_diff)
         drive_motor(motor_output)
         record(time_current,speed_desired,current_wheel_speed,speed_error,speed_error_cum,angle_desired,current_imu_angle,angle_error,angle_error_cum,angle_diff,motor_output)
-    
+
     else:
         #Deceleration of the motor to avoid skipping
         if motor_output<0:
@@ -209,21 +199,21 @@ def PID_control(IMU_message,Encoder_message):
         if motor_output>0:
             for x in range (int(motor_output),0,-10):
                 drive_motor(x)
-                rospy.sleep(0.01)        
+                rospy.sleep(0.01)
         drive_motor(0)
         print('angle exceeded, shutting down')
         run = False
         Fall = True
 
     First_PID_run = operator.not_(First_PID_run)
-    
-        
+
+
 def record(time_current,speed_desired,wheel_speed,speed_error,speed_error_cum,angle_desired,imu_angle,angle_error,angle_error_cum,angle_diff,motor_output):
     global file
     file.write(str('%.2f'%time_current)+'\t\t'+str('%.2f'%speed_desired)+'\t\t'+str('%.2f'%wheel_speed)+'\t\t'+str('%.2f'%speed_error)+'\t\t'
         +str('%.2f'%speed_error_cum)+'\t\t'+str('%.2f'%angle_desired)+'\t\t'+str('%.2f'%imu_angle)+'\t\t'+str('%.2f'%angle_error)+'\t\t'+
         str('%.2f'%angle_error_cum)+'\t\t'+str('%.2f'%angle_diff)+'\t\t'+str('%.2f'%motor_output)+'\n')
-    
+
 
 def initialize_file():
     global file
@@ -247,7 +237,7 @@ def initialize_file():
     # record speed gain
     file.write(', kp_speed = ' + str(round(k_p_speed,3)) + ', ' + 'ki_speed = ' + str(round(k_i_speed,3)))
     file.write(', Speed Desired = ' + str(speed_desired) + '\n') # desired speed
-    file.write('------------Second PID----------------\n')    
+    file.write('------------Second PID----------------\n')
     file.write('kp_angle = ' + str(round(k_p_angle2,3)) + ', ' + 'ki_angle = ' + str(round(k_i_angle2,3))+ ', ' + 'kd_angle = ' + str(round(k_d_angle2,3)))
     # record speed gain
     file.write(', kp_speed = ' + str(round(k_p_speed2,3)) + ', ' + 'ki_speed = ' + str(round(k_i_speed2,3)))
@@ -263,9 +253,9 @@ def message_sync():
     global current_imu_angle
     global angle_error_prev
     global run
-    global Fall 
+    global Fall
     global file
-    
+
     Fall = False
     run = True
     speed_error_cum = 0.0
@@ -275,26 +265,21 @@ def message_sync():
     time_current = rospy.get_time()
     # open a file
     initialize_file()
-    
-    sync = message_filters.ApproximateTimeSynchronizer([IMU_message,Encoder_message],queue_size = 4,slop = 0.03, allow_headerless=True) 
+
+    sync = message_filters.ApproximateTimeSynchronizer([IMU_message,Encoder_message],queue_size = 4,slop = 0.03, allow_headerless=True)
     sync.registerCallback(PID_control)
     rate.sleep()
     rospy.spin()
 
 
-if __name__ == "__main__": 
-    try:   
-        while button_not_pressed == True:
-            if GPIO.input(pin_switch_read) == 1:
-                rospy.sleep(0.01)
-                if GPIO.input(pin_switch_read) == 1:
-                    button_not_pressed = False
-            print('Push the button to start')
-            #only start the program is the switch is pressed
+if __name__ == "__main__":
+    try:
+        print('Press SPACE to start the robot')
+        keyboard.wait('space')
         rospy.sleep(0.5)
         time1 = rospy.get_time()
         time2 = rospy.get_time()
-        print('Robot is running \n In order to stop the robot, please press the button again')
+        print('Robot is running \n In order to stop the robot, please press the Space again')
         message_sync()
     except rospy.ROSInterruptException:
         motors.motor1.setSpeed(0)
