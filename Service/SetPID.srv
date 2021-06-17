@@ -1,0 +1,11 @@
+uint32 Kd_angle
+uint32 Ki_angle
+uint32 Kp_angle
+uint32 Kd_speed
+uint32 Ki_speed
+---
+uint32 Current_Kd_angle
+uint32 Current_Ki_angle
+uint32 Current_Kp_angle
+uint32 Current_Kd_speed
+uint32 Ki_Current_speed

@@ -49,19 +49,19 @@ def Encoder_Reading(port):
         port.flushInput()
         #port.write('\x61')   # send a
         rate.sleep()
-        
+
         Enc_read = port.readline()
         Enc_read = str(Enc_read).strip()
         if len(Enc_read) >= 1 and Enc_read[1:].isdigit() or Enc_read.isdigit():
-           
+
             print(Enc_read)
             Encoder.publish(float(Enc_read))
 
         else:
             continue
-        
-if __name__ == "__main__": 
-    try: 
+
+if __name__ == "__main__":
+    try:
        Enc_ser = init_encoder_port()
        Encoder_Reading(Enc_ser)
     except rospy.ROSInterruptException:

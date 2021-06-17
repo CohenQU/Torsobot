@@ -1,5 +1,10 @@
-#!/usr/bin/env python2
+#! /usr/bin/python
 # -*- coding: utf-8 -*-
+"""
+Created on Mon Mar  2 14:03:57 2020
+
+@author: shane
+"""
 import rospy
 import os
 import datetime
@@ -15,13 +20,9 @@ Encoder_message = message_filters.Subscriber('/Encoder_data', Float32)
 
 
 global motor_output
-global speed_desired
-global angle_desired
-global k_p_angle
-global k_i_angle
-global k_d_angle
-global k_p_speed
-global k_i_speed
+global angle_desired, speed_desired
+global k_p_angle, k_i_angle,  k_d_angle
+global k_p_speed, k_i_speed
 global time1
 global time2
 global reset
